@@ -1,0 +1,14 @@
+{
+  "$why": "The addresses this repository may name, each with the files that may name it and why. Read by scripts/check-addresses.ts; an entry that admits nothing fails, so the list carries no standing permission.",
+  "allow": [
+    { "host": "meet.google.com", "files": ["src/**"], "why": "Google Meet, a vendor the roster integrates: a class's meeting link is built on this host from its meeting code." },
+    { "host": "classroom.google.com", "files": ["src/**"], "why": "Google Classroom, a vendor the roster integrates: a course's link and its join link are on this host." },
+    { "host": "accounts.google.com", "files": ["src/**"], "why": "Google's sign-in page, named in the teacher account mail's steps for adding the school-issued account." },
+    { "host": "www.googleapis.com", "files": ["src/**"], "why": "Google's API scopes are URLs on this host (Calendar, Classroom, Directory); a scope is its name." },
+    { "host": "www.paypal.com", "files": ["src/**"], "why": "PayPal, a vendor the roster integrates: a payment's receipt link is on this host." },
+    { "host": "enroll.zellepay.com", "files": ["src/**"], "why": "Zelle, a vendor the roster integrates: the QR code a family scans to pay carries this host." },
+    { "host": "www.apache.org", "files": ["LICENSE", "README.md"], "why": "The Apache License 2.0 text and its pointer." },
+    { "host": "github.com", "files": ["scripts/gitleaks.sh"], "why": "The secret scanner's pinned release (gitleaks), fetched by CI and checked against its SHA-256." },
+    { "host": "registry.npmjs.org", "files": ["package-lock.json"], "why": "The npm registry the lockfile resolves every package from (its `resolved` fields, the only lines of the lockfile the gate reads)." }
+  ]
+}

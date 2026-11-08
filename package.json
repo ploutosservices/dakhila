@@ -1,0 +1,39 @@
+{
+  "name": "dakhila",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "A school roster API: families, classes, enrollment, evaluations and the school calendar, started by a host over ports.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outfile=dist/index.js",
+    "contract": "tsx scripts/contract.ts",
+    "check-contract": "tsx scripts/contract.ts --check",
+    "check-imports": "tsx scripts/check-imports.ts",
+    "check-addresses": "tsx scripts/check-addresses.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.3",
+    "google-auth-library": "^11.1.0",
+    "googleapis": "^181.0.0",
+    "jose": "^6.2.12",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.8",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "7.0.2",
+    "vitest": "^5.0.1"
+  }
+}

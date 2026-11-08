@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install
+        run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: The contract is the route table
+        run: npm run check-contract
+
+      - name: Imports stay inside the repository
+        run: npm run check-imports
+
+      - name: No address
+        run: npm run check-addresses
+
+      - name: No secret (gitleaks, pinned)
+        run: bash scripts/gitleaks.sh

@@ -1,0 +1,130 @@
+// Fake ports for the roster's tests: every member refuses by name unless the test hands its own, so a test that
+// reaches a port it did not mean to fails loudly instead of touching anything.
+import type { Ports, SchoolRules } from './ports'
+
+/** An invented school's rules: no real tenant's values, so a test that passes on them proves the logic, not a school. */
+export const FAKE_RULES: SchoolRules = {
+  fees: {
+    first: 40,
+    additional: 30,
+    tiers: [
+      { name: 'early', label: 'Early', endsAt: { month: 3, day: 15 }, adds: -10 },
+      { name: 'standard', label: 'Standard', endsAt: { month: 4, day: 15 }, adds: 0 },
+      { name: 'late', label: 'Late', endsAt: null, adds: 15 },
+    ],
+    graceHours: 2,
+    dropoutCountsAfter: { month: 4, day: 30 },
+    cardRates: { card: { basisPoints: 300, fixedCents: 30 }, apple_pay: { basisPoints: 250, fixedCents: 20 } },
+    ways: [{ method: 'card-way', name: 'Card Co' }, { method: 'bank-way', name: 'Bank Transfer' }, { method: 'cash', name: 'Cash' }],
+    cardFeeMethod: 'card-way',
+    cardsCarryingFee: ['CREDIT', 'STORE'],
+    cardsNamedFree: ['DEBIT', 'PREPAID'],
+  },
+  currency: 'EUR',
+  locale: {
+    phone: { countryCode: '49', nationalDigits: 11, nationalFormat: '#### #######' },
+    numbers: 'de-DE',
+    language: 'de-DE',
+  },
+  codes: {
+    evaluation: [{ value: 'lo', label: 'Low' }, { value: 'mid', label: 'Middle' }, { value: 'hi', label: 'High' }],
+    enrollmentStatus: {
+      labels: { 21: 'In', 22: 'Maybe', 23: 'Out', 24: 'Asked' },
+      enrolled: [21],
+      pending: [22, 24],
+      declined: [23],
+      live: [21, 22],
+      registered: 21,
+      invited: 22,
+      awaitingInvitation: 24,
+      familyMaySet: [22, 23],
+    },
+    autoReplyDays: 7,
+    intakeClaimDays: 14,
+    evaluationMonths: [11, 12],
+    teacherAddresses: ['{last}.{first}', '{first}-{last}'],
+    legacyIdColumn: 'Old number',
+    governingBody: { group: 'council', label: 'Council' },
+  },
+  calendar: {
+    enrollmentYearStartsIn: 2,
+    windowOpens: 2,
+    windowCloses: 6,
+    yearStarts: { month: 4, day: 1 },
+    classMonths: [{ month: 5, yearOffset: 0 }, { month: 6, yearOffset: 0 }, { month: 1, yearOffset: 1 }],
+    classWeekday: 6,
+    rehearsalDaysBefore: 2,
+    eventTypes: { schoolDay: 101, holiday: 102, activity: 103 },
+    feedUpcoming: 3,
+    dashboardSchoolDays: 4,
+  },
+  courses: {
+    languages: ['lang-a', 'lang-b'],
+    cultureDepartment: 'lore',
+    departmentWords: { language: 'Tongue', culture: 'Lore' },
+    periods: { language: { start: '09:00', end: '09:50' }, culture: { start: '10:00', end: '10:30' } },
+    lastCultureGrade: 6,
+    kindergartenCultureCode: 'K-H',
+    schoolBoard: { slug: 'example-board', name: 'Example Board' },
+    cultureCodePrefix: 'X',
+    kindergartenCodePrefix: 'K-',
+    noviceTrack: 7,
+    noviceStartLevel: 2,
+    standbyDepartment2: 9,
+    standbyLevel: 99,
+    noviceUpToGrade: 2,
+    teachingCountsAsVolunteering: true,
+    firstGradeAge: 5,
+    firstGradeCutoffMonth: 10,
+    earliestFirstGradeAge: 3,
+    grades: { enrollsFrom: 0, last: 10, kindergarten: 'Little', beforeKindergarten: 'Tiny', past: 'Done', sheetPrefix: 'Y', startWord: 'Term' },
+  },
+}
+
+const refuse = (what: string) => () => { throw new Error(`the test reached the ${what} port it did not fill`) }
+
+export function fakePorts(over: Partial<Ports> = {}): Ports {
+  return {
+    pool: {} as Ports['pool'],
+    listen: { get port(): number { return refuse('listen')() } },
+    identity: {
+      issuer: 'https://door.example.test/realms/sample', callerClient: 'host', hostApplication: 'host',
+      certificateHeader: 'X-Client-Identity',
+      viewHeaders: { viewedAs: 'X-Viewed-As', viewedAsName: 'X-Viewed-As-Name', impersonator: 'X-Impersonator' },
+      roleClaims: { roster: ['grants.{audience}'], given: ['grants.everywhere'] },
+      ownDeployment: () => 'sample', deploymentOf: refuse('identity.deploymentOf'),
+      applicationOf: refuse('identity.applicationOf'),
+    },
+    phone: { schoolNumber: refuse('phone'), placeCall: refuse('phone'), sendText: refuse('phone') },
+    payments: {
+      createOrder: refuse('payments'), patchOrderAmount: refuse('payments'), captureOrder: refuse('payments'),
+      readApprovedOrder: refuse('payments'), readOrderCapture: refuse('payments'), refundCapture: refuse('payments'),
+      readRefund: refuse('payments'), readRefundWithCapture: refuse('payments'), readCapture: refuse('payments'),
+      readDispute: refuse('payments'), readTransactions: refuse('payments'),
+    },
+    paymentNotices: { webhookId: refuse('paymentNotices'), verifyNotice: refuse('paymentNotices') },
+    deposits: { since: refuse('deposits') },
+    classroom: {
+      courses: refuse('classroom'), sessionMembers: refuse('classroom'), courseMembers: refuse('classroom'),
+      usersByEmails: refuse('classroom'), tenantMembers: refuse('classroom'), lastSynced: refuse('classroom'),
+      courseMeets: refuse('classroom'), boards: refuse('classroom'), calendarOf: refuse('classroom'), board: refuse('classroom'), boardCourseIds: refuse('classroom'), keep: refuse('classroom'), unlinkClass: refuse('classroom'),
+      postings: refuse('classroom'), hasPostings: refuse('classroom'),
+    },
+    ledger: { accountFor: refuse('ledger'), book: refuse('ledger'), setReference: refuse('ledger'), remove: refuse('ledger'), entries: refuse('ledger') },
+    mail: { send: refuse('mail'), page: refuse('mail') },
+    secrets: { read: refuse('secrets'), readOrNull: refuse('secrets'), byPrefix: refuse('secrets') },
+    clock: { now: () => new Date('2026-11-07T12:00:00Z') },
+    host: { production: () => false, environment: () => 'test', page: (name, id) => `/school/${name}${id ? `/${id}` : ''}`, route: (name, id) => `/api/school/${name}${id ? `/${id}` : ''}`, smsCallbacks: () => false, bounded: refuse('host.bounded') },
+    tenants: {
+      byId: refuse('tenants'), bySlug: refuse('tenants'), dowry: refuse('tenants'),
+      text: refuse('tenants'), textOrNull: refuse('tenants'), setText: refuse('tenants'), role: refuse('tenants'),
+      schoolWord: async (_tenantId, key) => `[school ${key}]`,
+      rules: async () => FAKE_RULES,
+      offeredRoles: refuse('tenants'), rosterOn: refuse('tenants'), logoFile: refuse('tenants'),
+    },
+    records: { outwardAct: refuse('records'), birthId: refuse('records'), userByAddress: refuse('records'), pickedRoles: refuse('records'),
+      dropIds: refuse('records'), logChanges: refuse('records'), changes: refuse('records'), usersByIds: refuse('records') },
+    google: { jwt: refuse('google'), auth: refuse('google'), serviceAccountKey: refuse('google') },
+    ...over,
+  }
+}
