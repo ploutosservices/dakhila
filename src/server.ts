@@ -3,10 +3,11 @@
 // answers with data only, in the roster's shapes (`/v1/`, errors `{ error, code }`).
 //
 //   /api/health   open: no credential, the door's state inside it (for a health check)
-//   /v1/...       the route table (routes.ts). Two kinds of caller:
+//   /v1/...       the route table (routes.ts). Three kinds of caller:
 //                 a person — their door token exchanged for audience roster, the tenant in the path;
 //                 the host's public doors — no token, and the certificate header naming the host application of this API's own deployment:
-//                 the operations MARKED public-door, and no other. A certificate of another deployment is refused.
+//                 the operations MARKED public-door, and no other. A certificate of another deployment is refused;
+//                 a run — that certificate and the run header (runs.ts): the operations whose `runs` name it.
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { chmodSync, rmSync } from 'node:fs'
 import { getTenantBySlug } from './lib/tenant'
@@ -16,6 +17,7 @@ import { verifyBearer, doorReachable } from './token'
 import { callerIn, may, userOf } from './access'
 import { match, type PersonCall } from './routes'
 import { BodyRefused } from './op'
+import { isRun } from './runs'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 /** A body larger than this is refused: no operation takes more than a form or one PayPal notice. */
@@ -53,7 +55,60 @@ function bodyOf(req: Request, raw: boolean): { ok: true; body: unknown } | { ok:
   try { return { ok: true, body: JSON.parse(req.raw) } } catch { return { ok: false } }
 }
 
+/** Every request: one carrying the run header goes the run's way and writes the run's log line, whatever it answers. */
 export async function answer(req: Request): Promise<{ status: number; body: unknown }> {
+  const run = header(req, ports().identity.runHeader)
+  if (!run) return answerOf(req)
+  const started = Date.now()
+  let operation = '-'
+  let status = 500
+  try {
+    const a = await answerRun(req, run, id => { operation = id })
+    status = a.status
+    return a
+  } finally {
+    console.log(`[dakhila] run ${isRun(run) ? run : 'unlisted'} ${operation} ${status} ${Date.now() - started}ms`)
+  }
+}
+
+/** A run (runs.ts): the host's certificate of this deployment, no token, on an operation whose `runs` name it. The
+ *  name is a label, never a credential: the caller checks (header, certificate, operation, run name) come before
+ *  anything is read. */
+async function answerRun(req: Request, run: string, named: (operationId: string) => void): Promise<{ status: number; body: unknown }> {
+  const path = new URL(req.url || '/', 'http://roster.invalid').pathname
+  const hit = match(req.method, path)
+  if (!hit) return { status: 404, body: fail('not_found', 'no such operation') }
+  const { route, params } = hit
+  named(route.operationId)
+  // Node joins a repeated header with a comma, and no run's name holds one.
+  if (run.includes(',') || req.headers.authorization) {
+    return { status: 400, body: fail('bad_request', 'one caller per call: one run header, and no token beside it') }
+  }
+  const subject = header(req, ports().identity.certificateHeader)
+  if (!isHostHere(subject)) return { status: 403, body: fail('forbidden', `${subject ?? 'a call with no certificate'} may not name a run`) }
+  if (route.publicDoor) return { status: 403, body: fail('forbidden', `${route.operationId} is the host's public door: no run calls it`) }
+  if (!isRun(run) || !route.runs?.includes(run)) return { status: 403, body: fail('forbidden', `${isRun(run) ? run : 'that run'} may not call ${route.operationId}`) }
+
+  const asked = new URL(req.url || '/', 'http://roster.invalid').searchParams
+  const query: Record<string, string> = {}
+  for (const name of Object.keys(route.query ?? {})) { const v = asked.get(name); if (v !== null) query[name] = v }
+  const parsed = bodyOf(req, route.rawBody === true)
+  if (!parsed.ok) return { status: 400, body: fail('bad_request', 'the body is not JSON') }
+  const tenant = await getTenantBySlug(params.slug)
+  if (!tenant) return { status: 404, body: fail('not_found', 'no such tenant') }
+  if (Object.entries(params).some(([n, v]) => n !== 'slug' && !UUID.test(v) && !route.textParams?.includes(n))) {
+    return { status: 404, body: fail('not_found', 'no such record') }
+  }
+  const actor: Actor = { verb: run, credential: subject as string }
+  try {
+    return await route.handle({ store: storeOf(), tenant, caller: null, actor, params, query, body: parsed.body, raw: req.raw, headers: req.headers })
+  } catch (e) {
+    if (e instanceof BodyRefused) return { status: 400, body: fail('bad_request', e.message) }
+    throw e
+  }
+}
+
+async function answerOf(req: Request): Promise<{ status: number; body: unknown }> {
   const path = new URL(req.url || '/', 'http://roster.invalid').pathname
   if (path === '/api/health') {
     const door = await doorReachable()

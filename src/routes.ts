@@ -8,6 +8,7 @@ import type { Store } from './store'
 import type { Actor } from './ports'
 import type { Tenant } from './lib/tenant'
 import type { Caller } from './access'
+import type { RunName } from './runs'
 import { FAMILY_ROUTES } from './families'
 import { ENROLLMENT_ROUTES } from './enrollment'
 import { BURSAR_ROUTES } from './bursar'
@@ -40,12 +41,15 @@ import { VOLUNTEERING_ROUTES } from './volunteering'
 import { EMAIL_GROUP_ROUTES } from './email-groups'
 import { SEAM_ROUTES } from './seam'
 import { RECORD_LINK_ROUTES } from './record-link'
+import { HOST_READ_ROUTES } from './host-reads'
+import { SEED_ROUTES } from './seeds'
 
 export type Answer = { status: number; body: unknown }
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 export type Schema = Record<string, unknown>
 
-/** One call as an operation sees it. `caller` and `actor` are null only on a public-door operation. */
+/** One call as an operation sees it. `caller` is null on a public-door operation and for a run; `actor` is null on a
+ *  public-door operation, and for a run names it (`{ verb: run, credential: subject }`). */
 export type Call = {
   store: Store
   /** The path's tenant, as the configuration port answers it. */
@@ -73,6 +77,9 @@ export type Route = {
   alsoAllowed?: string
   /** MARKED public-door: the host's certificate alone calls it, with no person; no permission or role. */
   publicDoor?: true
+  /** The runs (runs.ts) that may call it with the host's certificate and the run header, and no person. `allowed` is
+   *  never asked for a run: the handler limits what a run may ask. */
+  runs?: readonly RunName[]
   /** A read that names the caller by the address the door verified and nothing else: admitted with no host user — the caller's userId is then '' and no act may be recorded. */
   addressOnly?: true
   allowed: (c: PersonCall) => Promise<boolean>
@@ -88,7 +95,7 @@ export type Route = {
   handle: (c: Call) => Promise<Answer>
 }
 
-export const ROUTES: Route[] = [...FAMILY_ROUTES, ...ENROLLMENT_ROUTES, ...BURSAR_ROUTES, ...PAYPAL_ROUTES, ...DONATE_ROUTES, ...GENEALOGY_ROUTES, ...FAMILY_ACT_ROUTES, ...FAMILY_READ_ROUTES, ...PERSON_ACT_ROUTES, ...PERSON_READ_ROUTES, ...FOLLOW_UP_ROUTES, ...INTAKE_ROUTES, ...TEXT_ROUTES, ...EXPORT_ROUTES, ...NEWSLETTER_ROUTES, ...SESSION_ROUTES, ...HELP_ROUTES, ...DASHBOARD_ROUTES, ...CALENDAR_ROUTES, ...VACATION_ROUTES, ...CLASS_ROUTES, ...CLASSROOM_ROUTES, ...CLASS_READ_ROUTES, ...UNIVERSE_ROUTES, ...CLASSROOM_READ_ROUTES, ...PLACEMENT_ROUTES, ...EVALUATION_ROUTES, ...EVENT_ROUTES, ...VOLUNTEERING_ROUTES, ...EMAIL_GROUP_ROUTES, ...SEAM_ROUTES, ...RECORD_LINK_ROUTES]
+export const ROUTES: Route[] = [...FAMILY_ROUTES, ...ENROLLMENT_ROUTES, ...BURSAR_ROUTES, ...PAYPAL_ROUTES, ...DONATE_ROUTES, ...GENEALOGY_ROUTES, ...FAMILY_ACT_ROUTES, ...FAMILY_READ_ROUTES, ...PERSON_ACT_ROUTES, ...PERSON_READ_ROUTES, ...FOLLOW_UP_ROUTES, ...INTAKE_ROUTES, ...TEXT_ROUTES, ...EXPORT_ROUTES, ...NEWSLETTER_ROUTES, ...SESSION_ROUTES, ...HELP_ROUTES, ...DASHBOARD_ROUTES, ...CALENDAR_ROUTES, ...VACATION_ROUTES, ...CLASS_ROUTES, ...CLASSROOM_ROUTES, ...CLASS_READ_ROUTES, ...UNIVERSE_ROUTES, ...CLASSROOM_READ_ROUTES, ...PLACEMENT_ROUTES, ...EVALUATION_ROUTES, ...EVENT_ROUTES, ...VOLUNTEERING_ROUTES, ...EMAIL_GROUP_ROUTES, ...SEAM_ROUTES, ...RECORD_LINK_ROUTES, ...HOST_READ_ROUTES, ...SEED_ROUTES]
 
 /** The route and its path parameters for a method and path, or null. */
 export function match(method: string, path: string): { route: Route; params: Record<string, string> } | null {

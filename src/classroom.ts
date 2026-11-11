@@ -11,6 +11,11 @@ import { persons, rosterAvailableClasses, rosterEnrollments, rosterTeachers } fr
 import { academicYearOf } from './lib/year-context'
 import { createClassroomForClasses } from './lib/classroom-create'
 import { provisionTeacherAccount, sessionYearTeacher } from './lib/teacher-account-provision'
+import { dashboardPersonId } from './lib/dashboard-person'
+import { assignedTeacherClassroomAddresses } from './lib/teacher-classroom-address'
+import { chooseAddress } from './lib/teacher-account'
+import { tenantRules } from './lib/rules-context'
+import { workspaceDomain } from './lib/role-mailbox'
 
 const T = '/v1/tenants/{slug}/roster'
 const PROVISIONED = S.obj({ 'address?': S.str, 'sentTo?': S.str, 'notMade?': S.str })
@@ -85,11 +90,31 @@ export const CLASSROOM_ROUTES: Route[] = [
     },
   },
   {
-    // What the Classroom refresh's enrichment reads to name a course and a member's
+    // The address the caller's school account would get, worked out against the roster's assigned addresses only. The
+    // account-creating operation chooses again against the full directory. The taken set itself is never served.
+    method: 'GET', path: `${T}/teacher-account/mine/proposal`, operationId: 'classroom.proposalMine',
+    summary: "The school address the caller's own account would be given, chosen against the roster's assigned addresses (the account-creating operation chooses again against the full directory). `address` is absent when the caller has no person in the tenant.",
+    permission: null, alsoAllowed: "the signed-in person: their own proposal, for the person whose address is the one they signed in with",
+    allowed: async () => true,
+    response: S.obj({ 'address?': S.str }),
+    handle: async c => {
+      const pc = c as PersonCall
+      const personId = await dashboardPersonId(c.tenant.id, pc.caller.email)
+      if (!personId) return ok({})
+      const [me] = await c.store.select({ firstName: persons.firstName, lastName: persons.lastName }).from(persons)
+        .where(and(eq(persons.id, personId), eq(persons.tenantId, c.tenant.id))).limit(1)
+      if (!me) return ok({})
+      const [rules, assigned, domain] = await Promise.all([tenantRules(c.tenant.id), assignedTeacherClassroomAddresses(c.tenant.id), workspaceDomain(c.tenant.id)])
+      return ok({ address: chooseAddress(rules.codes.teacherAddresses, me.firstName, me.lastName ?? '', assigned, domain) })
+    },
+  },
+  {
+    // What a caller needs to name a Google Classroom course and a member's
     // class. Every enrollment row, in the store's order, because a student's first row decides.
     method: 'GET', path: `${T}/classroom/links`, operationId: 'classroom.links',
-    summary: "Each class linked to a Google Classroom course with that course's id, every enrollment's student and class, and the teacher rows of the linked classes.",
+    summary: "Each class linked to a Google Classroom course with that course's id, every enrollment's student and class, and the teacher rows of the linked classes. A run (course-links) gets the classes alone, the other two lists empty.",
     permission: 'google.write',
+    runs: ['course-links'],
     allowed: async c => may(c.caller, 'google.write'),
     response: S.obj({
       classes: S.list(S.obj({ id: S.uuid, courseId: S.str })),
@@ -100,12 +125,14 @@ export const CLASSROOM_ROUTES: Route[] = [
       const linked = await c.store.select({ id: rosterAvailableClasses.id, courseId: rosterAvailableClasses.classroomCourseId })
         .from(rosterAvailableClasses)
         .where(and(eq(rosterAvailableClasses.tenantId, c.tenant.id), isNotNull(rosterAvailableClasses.classroomCourseId)))
+      const classes = linked.map(k => ({ id: k.id, courseId: k.courseId as string }))
+      if (!c.caller) return ok({ classes, enrollments: [], teachers: [] })
       const ids = linked.map(k => k.id)
       const enrollments = await c.store.select({ studentId: rosterEnrollments.studentId, classId: rosterEnrollments.classId })
         .from(rosterEnrollments).where(eq(rosterEnrollments.tenantId, c.tenant.id))
       const teachers = ids.length === 0 ? [] : await c.store.select({ personId: rosterTeachers.personId, classId: rosterTeachers.classId })
         .from(rosterTeachers).where(and(eq(rosterTeachers.tenantId, c.tenant.id), inArray(rosterTeachers.classId, ids)))
-      return ok({ classes: linked.map(k => ({ id: k.id, courseId: k.courseId as string })), enrollments, teachers })
+      return ok({ classes, enrollments, teachers })
     },
   },
 ]

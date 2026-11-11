@@ -5,11 +5,34 @@ import type { PersonCall, Route } from './routes'
 import { notFound, ok, S } from './op'
 import { getSessionView } from './lib/session-view'
 import { academicYearOf, enrollmentYearOf, todayOf } from './lib/year-context'
-import { personOfAddress } from './lib/roster-roles'
+import { personOfAddress, getUserFamilyId, familyOfAddress } from './lib/roster-roles'
+import { dashboardPersonId } from './lib/dashboard-person'
+import { schoolAddressOfSignedIn } from './lib/teacher-classroom-address'
+import { resolveAddressIdentity } from './lib/address-identity'
 import { getFamilySchedule } from './lib/roster-classes'
 import { isSchoolDate } from './lib/calendar'
 
 export const SESSION_ROUTES: Route[] = [
+  {
+    // The caller's own record. Each field comes from its own lookup, with its own match rule.
+    method: 'GET', path: '/v1/tenants/{slug}/me', operationId: 'me.record',
+    summary: "The caller's own record: their family by their user record (familyId) and by the person holding their address (familyOfAddress), the person their address resolves to (dashboardPersonId), their school address, and who the address they signed in with is. A field is null where its lookup finds nothing.",
+    permission: null, alsoAllowed: 'the signed-in person: their own record, found by the address they signed in with',
+    addressOnly: true,
+    allowed: async () => true,
+    response: S.obj({
+      familyId: S.nullable(S.uuid), familyOfAddress: S.nullable(S.uuid), dashboardPersonId: S.nullable(S.uuid),
+      schoolAddress: S.nullable(S.str), identity: S.row("who the address is (src/lib/address-identity.ts AddressIdentity)"),
+    }),
+    handle: async c => {
+      const email = (c as PersonCall).caller.email
+      const [familyId, family, dashboardPerson, schoolAddress, identity] = await Promise.all([
+        getUserFamilyId(email, c.tenant.id), familyOfAddress(c.tenant.id, email.toLowerCase()),
+        dashboardPersonId(c.tenant.id, email), schoolAddressOfSignedIn(c.tenant.id, email), resolveAddressIdentity(c.tenant.id, email),
+      ])
+      return ok({ familyId, familyOfAddress: family, dashboardPersonId: dashboardPerson, schoolAddress, identity })
+    },
+  },
   {
     method: 'GET', path: '/v1/tenants/{slug}/roster/schedule/mine', operationId: 'schedule.mine',
     summary: "The caller's schedule: whether the caller's address is a live person of the tenant, every student of their family with this year's classes, and whether today is a school day.",

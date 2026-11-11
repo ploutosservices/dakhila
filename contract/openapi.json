@@ -17244,6 +17244,163 @@
         }
       }
     },
+    "/v1/tenants/{slug}/me": {
+      "get": {
+        "operationId": "me.record",
+        "summary": "The caller's own record: their family by their user record (familyId) and by the person holding their address (familyOfAddress), the person their address resolves to (dashboardPersonId), their school address, and who the address they signed in with is. A field is null where its lookup finds nothing.",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": null,
+        "x-also-allowed": "the signed-in person: their own record, found by the address they signed in with",
+        "x-address-only": true,
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "familyId",
+                    "familyOfAddress",
+                    "dashboardPersonId",
+                    "schoolAddress",
+                    "identity"
+                  ],
+                  "properties": {
+                    "familyId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "familyOfAddress": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "dashboardPersonId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "schoolAddress": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "identity": {
+                      "type": "object",
+                      "description": "who the address is (src/lib/address-identity.ts AddressIdentity); timestamps as date-time strings"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller is not what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{slug}/roster/schedule/mine": {
       "get": {
         "operationId": "schedule.mine",
@@ -22832,16 +22989,153 @@
         }
       }
     },
-    "/v1/tenants/{slug}/roster/classroom/links": {
+    "/v1/tenants/{slug}/roster/teacher-account/mine/proposal": {
       "get": {
-        "operationId": "classroom.links",
-        "summary": "Each class linked to a Google Classroom course with that course's id, every enrollment's student and class, and the teacher rows of the linked classes.",
+        "operationId": "classroom.proposalMine",
+        "summary": "The school address the caller's own account would be given, chosen against the roster's assigned addresses (the account-creating operation chooses again against the full directory). `address` is absent when the caller has no person in the tenant.",
         "security": [
           {
             "rosterToken": []
           }
         ],
+        "x-permission": null,
+        "x-also-allowed": "the signed-in person: their own proposal, for the person whose address is the one they signed in with",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "address": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller is not what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/classroom/links": {
+      "get": {
+        "operationId": "classroom.links",
+        "summary": "Each class linked to a Google Classroom course with that course's id, every enrollment's student and class, and the teacher rows of the linked classes. A run (course-links) gets the classes alone, the other two lists empty.",
+        "security": [
+          {
+            "rosterToken": []
+          },
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
         "x-permission": "google.write",
+        "x-runs": [
+          "course-links"
+        ],
         "parameters": [
           {
             "name": "slug",
@@ -22953,7 +23247,7 @@
             }
           },
           "403": {
-            "description": "the caller holds neither google.write nor what x-also-allowed says",
+            "description": "the caller holds neither google.write nor what x-also-allowed says; or a run this operation does not name",
             "content": {
               "application/json": {
                 "schema": {
@@ -32252,6 +32546,2062 @@
         }
       }
     },
+    "/v1/tenants/{slug}/roster/persons/by-address": {
+      "post": {
+        "operationId": "person.byAddress",
+        "summary": "The persons holding each address, one row per address and person, by person id. Rule own-exact: persons.email as stored, deleted persons included; own-or-classroom: either address, lower-cased and trimmed, live persons only. With family: the family's number; with contact: the phone and the family's postal address, and the caller must also hold roster.read.",
+        "security": [
+          {
+            "rosterToken": []
+          },
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-permission": "google.read",
+        "x-runs": [
+          "course-links"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "addresses",
+                  "rule"
+                ],
+                "properties": {
+                  "addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "rule": {
+                    "type": "string"
+                  },
+                  "with": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "address",
+                      "id",
+                      "firstName",
+                      "lastName",
+                      "email",
+                      "classroomEmail",
+                      "familyId"
+                    ],
+                    "properties": {
+                      "address": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "email": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "classroomEmail": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "familyId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "legacyFamilyId": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "phone": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "addr1": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "addr2": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "city": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "state": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "zip": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.read nor what x-also-allowed says; or a run this operation does not name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/persons/names": {
+      "post": {
+        "operationId": "person.names",
+        "summary": "First and last names of the given persons in the tenant, deleted persons included, so ids held in older records still resolve.",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": "google.read",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "firstName",
+                      "lastName"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.read nor what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/families/numbers": {
+      "post": {
+        "operationId": "family.numbers",
+        "summary": "The family number (legacy_family_id) of each given family in the tenant.",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": "google.read",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "legacyFamilyId"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "legacyFamilyId": {
+                        "type": "number",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.read nor what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/persons/{id}/brief": {
+      "get": {
+        "operationId": "person.brief",
+        "summary": "A person's first and last name, e-mail address and family id, deleted persons included; 404 when the tenant holds no such person.",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": "google.write",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "firstName",
+                    "lastName",
+                    "email",
+                    "familyId"
+                  ],
+                  "properties": {
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "email": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "familyId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.write nor what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/classes/{id}/brief": {
+      "get": {
+        "operationId": "class.brief",
+        "summary": "A class's year and section; 404 when the tenant holds no such class.",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": "google.write",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "year",
+                    "section"
+                  ],
+                  "properties": {
+                    "year": {
+                      "type": "number"
+                    },
+                    "section": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.write nor what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/families/{id}/teachers-without-account": {
+      "get": {
+        "operationId": "family.teachersWithoutAccount",
+        "summary": "The family's live members and its mother and father who teach a class of `year` and hold no school address, by id: the people a principal may make a school account for. `year` is required (400 without it).",
+        "security": [
+          {
+            "rosterToken": []
+          }
+        ],
+        "x-permission": "roster.write",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "firstName",
+                      "lastName"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "lastName": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither roster.write nor what x-also-allowed says",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/persons/identities": {
+      "post": {
+        "operationId": "person.identities",
+        "summary": "Who each address is in the tenant: a live person's own address first, then a school classroom address, else unknown (resolveAddressIdentity), per address.",
+        "security": [
+          {
+            "rosterToken": []
+          },
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-permission": "newsletter.read",
+        "x-runs": [
+          "newsletter-authors"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "addresses"
+                ],
+                "properties": {
+                  "addresses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "address",
+                      "identity"
+                    ],
+                    "properties": {
+                      "address": {
+                        "type": "string"
+                      },
+                      "identity": {
+                        "type": "object",
+                        "description": "src/lib/address-identity.ts AddressIdentity; timestamps as date-time strings"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither newsletter.read nor what x-also-allowed says; or a run this operation does not name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/classroom/teacher-addresses": {
+      "get": {
+        "operationId": "classroom.teacherAddresses",
+        "summary": "For each class of `year` linked to a Google Classroom course, by class id: the course and its live teachers, the lead first then by person id, each with their school classroom address (null when none), whether they lead, and their names. `year` is required (400 without it).",
+        "security": [
+          {
+            "rosterToken": []
+          },
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-permission": "google.read",
+        "x-runs": [
+          "meet-teachers"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "classId",
+                      "courseId",
+                      "teachers"
+                    ],
+                    "properties": {
+                      "classId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "courseId": {
+                        "type": "string"
+                      },
+                      "teachers": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "address",
+                            "isLead",
+                            "firstName",
+                            "lastName"
+                          ],
+                          "properties": {
+                            "address": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isLead": {
+                              "type": "boolean"
+                            },
+                            "firstName": {
+                              "type": "string"
+                            },
+                            "lastName": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "the caller holds neither google.read nor what x-also-allowed says; or a run this operation does not name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/seeds/comment-codes": {
+      "put": {
+        "operationId": "seed.commentCodes",
+        "summary": "The teacher comment codes: all of them when the tenant holds none, else nothing.",
+        "security": [
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-runs": [
+          "seed"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "codes"
+                ],
+                "properties": {
+                  "codes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "text"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "number"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "seeded",
+                    "skipped"
+                  ],
+                  "properties": {
+                    "seeded": {
+                      "type": "number"
+                    },
+                    "skipped": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "a run this operation does not name, or any person: only its runs call it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/seeds/eval-templates": {
+      "put": {
+        "operationId": "seed.evalTemplates",
+        "summary": "The evaluation templates: each level the tenant holds no template for is inserted; none is updated.",
+        "security": [
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-runs": [
+          "seed"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "templates"
+                ],
+                "properties": {
+                  "templates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "level",
+                        "sections"
+                      ],
+                      "properties": {
+                        "level": {
+                          "type": "number"
+                        },
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "description": "a section: name and criteria; timestamps as date-time strings"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "inserted",
+                    "kept"
+                  ],
+                  "properties": {
+                    "inserted": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "kept": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "a run this operation does not name, or any person: only its runs call it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{slug}/roster/seeds/roles": {
+      "put": {
+        "operationId": "seed.roles",
+        "summary": "The role mailboxes' names: a slug the tenant holds gets its name and description; a missing slug is inserted under a new record id. No address is written.",
+        "security": [
+          {
+            "hostCertificate": [],
+            "hostRun": []
+          }
+        ],
+        "x-runs": [
+          "seed"
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "the tenant's slug (tenants.slug); every call is authorised against it"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "roles"
+                ],
+                "properties": {
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "slug",
+                        "name",
+                        "description"
+                      ],
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "inserted",
+                    "updated"
+                  ],
+                  "properties": {
+                    "inserted": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "updated": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "the body is not the request schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "no token, or one this API does not take",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "a run this operation does not name, or any person: only its runs call it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "no such tenant or record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "refused by the operation's own rule, in its words (`code` refused, or a named code)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "health",
@@ -32294,7 +34644,13 @@
       },
       "hostCertificate": {
         "type": "mutualTLS",
-        "description": "The host application's certificate, issued for this API's own deployment, with no token: the operations marked x-public-door and no other."
+        "description": "The host application's certificate, issued for this API's own deployment, with no token: the operations marked x-public-door, and with a run header the operations whose x-runs name that run; no other."
+      },
+      "hostRun": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Run",
+        "description": "The run's name (src/runs.ts), beside hostCertificate and with no token: a label for least privilege and the log, never a credential. Taken only on the operations whose x-runs name it. The header's name is the host's choice (Identity.runHeader); X-Run is an example."
       }
     }
   }

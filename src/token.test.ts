@@ -15,6 +15,7 @@ beforeAll(async () => {
     identity: {
       issuer: ISSUER, callerClient: 'host-app', hostApplication: 'host-app', certificateHeader: 'X-Client-Identity',
       viewHeaders: { viewedAs: 'X-Viewed-As', viewedAsName: 'X-Viewed-As-Name', impersonator: 'X-Impersonator' },
+      runHeader: 'X-Run',
       roleClaims: { roster: ['grants.{audience}'], given: ['grants.everywhere'] },
       ownDeployment: () => 'sample', deploymentOf: () => 'sample', applicationOf: () => 'host-app',
     },

@@ -1,19 +1,34 @@
 {
-  "name": "dakhila",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@ploutosservices/dakhila",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "description": "A school roster API: families, classes, enrollment, evaluations and the school calendar, started by a host over ports.",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "source": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "contract",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ploutosservices/dakhila.git"
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outfile=dist/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outfile=dist/index.js && tsc -p tsconfig.build.json",
     "contract": "tsx scripts/contract.ts",
     "check-contract": "tsx scripts/contract.ts --check",
     "check-imports": "tsx scripts/check-imports.ts",

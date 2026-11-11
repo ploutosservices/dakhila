@@ -22,6 +22,9 @@ export type Identity = {
   /** The headers the host application sends beside its certificate for its session's state: the user viewed as, that
    *  user's name, and the impersonator its sign-in named. Believed only from the host application. */
   viewHeaders: { viewedAs: string; viewedAsName: string; impersonator: string }
+  /** The header naming a run (runs.ts) beside the host application's certificate, with no token. Believed only from
+   *  the host application of this deployment, and only on an operation whose `runs` name it. */
+  runHeader: string
   /** Where the door's access token carries roles, as dotted claim paths tried in order (the first that holds a value
    *  is read; `{audience}` stands for the roster's audience): the roles the door gives for the roster, and the roles it
    *  gives across applications. */

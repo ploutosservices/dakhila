@@ -26,12 +26,19 @@ export function contract(): Record<string, unknown> {
     // A query parameter is optional: absent, the operation answers as its summary says for none.
     for (const [name, schema] of Object.entries(r.query ?? {})) params.push({ name, in: 'query', required: false, schema } as typeof params[number])
     const json = (schema: unknown) => ({ 'application/json': { schema } })
+    // A run-only operation (the seeds) admits no person: no permission and nobody else allowed.
+    const runOnly = !!r.runs?.length && r.permission === null && !r.alsoAllowed
+    const asRun = { hostCertificate: [], hostRun: [] }
     const who = r.publicDoor
       ? { security: [{ hostCertificate: [] }], 'x-public-door': true }
-      : { security: [{ rosterToken: [] }], 'x-permission': r.permission, ...(r.alsoAllowed ? { 'x-also-allowed': r.alsoAllowed } : {}), ...(r.addressOnly ? { 'x-address-only': true } : {}) }
+      : runOnly
+        ? { security: [asRun], 'x-runs': r.runs }
+        : { security: [{ rosterToken: [] }, ...(r.runs?.length ? [asRun] : [])], 'x-permission': r.permission, ...(r.alsoAllowed ? { 'x-also-allowed': r.alsoAllowed } : {}), ...(r.addressOnly ? { 'x-address-only': true } : {}), ...(r.runs?.length ? { 'x-runs': r.runs } : {}) }
     const refusedBy = r.publicDoor
       ? "a certificate that is not this deployment's host application's, or a person's token: no person calls a public door"
-      : r.permission ? `the caller holds neither ${r.permission} nor what x-also-allowed says` : 'the caller is not what x-also-allowed says'
+      : runOnly ? 'a run this operation does not name, or any person: only its runs call it'
+      : (r.permission ? `the caller holds neither ${r.permission} nor what x-also-allowed says` : 'the caller is not what x-also-allowed says')
+        + (r.runs?.length ? '; or a run this operation does not name' : '')
     paths[r.path] = {
       ...(paths[r.path] ?? {}),
       [r.method.toLowerCase()]: {
@@ -75,7 +82,11 @@ export function contract(): Record<string, unknown> {
         },
         hostCertificate: {
           type: 'mutualTLS',
-          description: "The host application's certificate, issued for this API's own deployment, with no token: the operations marked x-public-door and no other.",
+          description: "The host application's certificate, issued for this API's own deployment, with no token: the operations marked x-public-door, and with a run header the operations whose x-runs name that run; no other.",
+        },
+        hostRun: {
+          type: 'apiKey', in: 'header', name: 'X-Run',
+          description: "The run's name (src/runs.ts), beside hostCertificate and with no token: a label for least privilege and the log, never a credential. Taken only on the operations whose x-runs name it. The header's name is the host's choice (Identity.runHeader); X-Run is an example.",
         },
       },
     },

@@ -41,6 +41,20 @@ export const ROLE_BUNDLES: Record<RoleName, Permission[]> = {
   family: ['household.read'],
 }
 
+/** What each role's bundle holds, in plain words for a host to show beside the role.
+ *  One line per role; a role with none fails to compile. */
+export const ROLE_WORDS: Record<RoleName, string> = {
+  owner: 'Everything in the tenant, the owner\'s own acts included.',
+  principal: 'Everything in the school but the owner\'s acts.',
+  accounting: 'Money and what it is for: the bursar\'s work, refunds approved, and families and enrollment read.',
+  'office-reader': 'The back office, read only.',
+  coordinator: 'Volunteering work and events.',
+  'genealogy-reader': 'The family tree, read.',
+  'genealogy-editor': 'The family tree, read and changed.',
+  teacher: 'A current teacher: every family read, placement, the Classroom views, every class\'s postings, the Drive searched.',
+  family: 'Their own household only.',
+}
+
 /** Roles formally include lesser roles. */
 export const ROLE_HIERARCHY: Partial<Record<RoleName, RoleName[]>> = {
   principal: ['teacher', 'accounting'],

@@ -48,15 +48,25 @@ only through those ports.
 ## Use
 
 ```
+npm install @ploutosservices/dakhila
+```
+
+The package's entry (built to `dist/index.js`, its types in `dist/types/`) exports the server's start function and
+the ports' types; the types resolve under `moduleResolution: bundler` (NodeNext consumers are not yet supported). The
+source ships with it: a host built with a TypeScript-aware bundler may import a module by its
+path (`@ploutosservices/dakhila/src/lib/…`) for the table definitions and the pure functions.
+
+To work on it:
+
+```
 npm ci
 npm run typecheck
 npm test
-npm run build            # dist/index.js, packages left external
+npm run build            # dist/index.js (packages left external) and dist/types
 npm run contract         # contract/openapi.json from the route table
 ```
 
-The package's entry (`src/index.ts`) exports the server's start function, the ports' types, the table definitions
-and the pure functions; a host may also import a module by its path (`dakhila/src/lib/…`). Its tests run with fake ports (`src/ports-fake.ts`) and need no database and no host.
+Its tests run with fake ports (`src/ports-fake.ts`) and need no database and no host.
 
 Table definitions are drizzle definitions made from the host's tables (`src/tables.ts`, `src/host-tables.ts`); the
 host generates and runs the migration steps in its own list.

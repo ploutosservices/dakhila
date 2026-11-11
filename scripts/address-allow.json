@@ -8,7 +8,7 @@
     { "host": "www.paypal.com", "files": ["src/**"], "why": "PayPal, a vendor the roster integrates: a payment's receipt link is on this host." },
     { "host": "enroll.zellepay.com", "files": ["src/**"], "why": "Zelle, a vendor the roster integrates: the QR code a family scans to pay carries this host." },
     { "host": "www.apache.org", "files": ["LICENSE", "README.md"], "why": "The Apache License 2.0 text and its pointer." },
-    { "host": "github.com", "files": ["scripts/gitleaks.sh"], "why": "The secret scanner's pinned release (gitleaks), fetched by CI and checked against its SHA-256." },
+    { "host": "github.com", "files": ["scripts/gitleaks.sh", "package.json"], "why": "The secret scanner's pinned release (gitleaks), fetched by CI and checked against its SHA-256; and the package's own public repository, which npm's trusted publishing checks the publish against." },
     { "host": "registry.npmjs.org", "files": ["package-lock.json"], "why": "The npm registry the lockfile resolves every package from (its `resolved` fields, the only lines of the lockfile the gate reads)." }
   ]
 }
